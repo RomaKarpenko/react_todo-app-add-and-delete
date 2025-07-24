@@ -19,6 +19,7 @@ export const App: React.FC = () => {
   const [loadingTodoIds, setLoadingTodoIds] = useState<number[]>([]);
 
   const [isError, setIsError] = useState<string | null>(null);
+  const [isInputDisabled, setIsInputDisabled] = useState<boolean>(false);
 
   const hideErrorMessage = () => {
     setTimeout(() => {
@@ -41,30 +42,60 @@ export const App: React.FC = () => {
 
   const addNewTodoFromInput = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const trimedTitle = title.trim();
 
-    if (trimedTitle === '') {
+    const trimmedTitle = title.trim();
+
+    if (!trimmedTitle) {
       setIsError('Title should not be empty');
       hideErrorMessage();
 
       return;
     }
 
-    const newTodo: Omit<Todo, 'id'> = {
-      title,
+    const tempId = Date.now();
+
+    const tempTodo: Todo = {
+      id: tempId,
+      title: trimmedTitle,
       completed: false,
       userId: USER_ID,
     };
 
-    addTodo(newTodo)
+    setIsInputDisabled(true);
+    setLoadingTodoIds(prev => [...prev, tempId]);
+
+    // ✅ додай тимчасовий todo в DOM одразу
+    setTodos(prevTodos => [...prevTodos, tempTodo]);
+
+    addTodo({
+      title: trimmedTitle,
+      completed: false,
+      userId: USER_ID,
+    })
       .then(todo => {
-        setTodos(prevTodos => [...prevTodos, todo]);
-        setTitle('');
+        // ✅ заміни tempTodo на справжній todo
+        setTodos(prevTodos => prevTodos.map(t => (t.id === tempId ? todo : t)));
+
         setDate(new Date());
+
+        setLoadingTodoIds(prev =>
+          prev.filter(id => id !== tempId).concat(todo.id),
+        );
+
+        setTimeout(() => {
+          setLoadingTodoIds(prev => prev.filter(id => id !== todo.id));
+          setTitle('');
+          setIsInputDisabled(false);
+        }, 500);
       })
       .catch(() => {
         setIsError('Unable to add todo');
         hideErrorMessage();
+
+        // ❌ прибери tempTodo, бо не вдалося додати
+        setTodos(prevTodos => prevTodos.filter(t => t.id !== tempId));
+        setLoadingTodoIds(prev => prev.filter(id => id !== tempId));
+        setIsInputDisabled(false);
       });
   };
 
@@ -93,6 +124,7 @@ export const App: React.FC = () => {
           setTodos={setTodos}
           setIsLoading={setIsLoading}
           setLoadingTodoIds={setLoadingTodoIds}
+          isInputDisabled={isInputDisabled}
         />
 
         <MainSection

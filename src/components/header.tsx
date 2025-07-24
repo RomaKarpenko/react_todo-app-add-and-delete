@@ -10,6 +10,7 @@ interface Props {
   setTodos: React.Dispatch<React.SetStateAction<Todo[]>>;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
   setLoadingTodoIds: React.Dispatch<React.SetStateAction<number[]>>;
+  isInputDisabled: boolean;
 }
 
 export const Header: React.FC<Props> = ({
@@ -20,6 +21,7 @@ export const Header: React.FC<Props> = ({
   setTodos,
   setIsLoading,
   setLoadingTodoIds,
+  isInputDisabled,
 }) => {
   const handleToggleAll = () => {
     const ggBet = todos.every(todo => todo.completed);
@@ -53,11 +55,14 @@ export const Header: React.FC<Props> = ({
 
       <form
         onSubmit={e => {
-          setTitle('');
           addNewTodoFromInput(e);
+          setTimeout(() => {
+            setTitle('');
+          }, 500);
         }}
       >
         <input
+          disabled={isInputDisabled}
           autoFocus
           data-cy="NewTodoField"
           type="text"

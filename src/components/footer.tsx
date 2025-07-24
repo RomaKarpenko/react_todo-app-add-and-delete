@@ -20,18 +20,20 @@ export const Footer: React.FC<Props> = ({
   hideErrorMessage,
 }) => {
   const deleteAllCompleted = () => {
-    const filteredToDelete = todos.filter(todo => todo.completed);
+    const completedTodos = todos.filter(todo => todo.completed);
 
-    filteredToDelete.map(todo =>
-      deleteTodo(todo.id)
-        .then(() => {
-          setTodos(prevTodos => prevTodos.filter(t => !t.completed));
-        })
-        .catch(() => {
-          setIsError('Unable to delete a todos');
-          hideErrorMessage();
-        }),
-    );
+    const idsToDelete = completedTodos.map(todo => todo.id);
+
+    Promise.all(completedTodos.map(todo => deleteTodo(todo.id)))
+      .then(() => {
+        setTodos(prevTodos =>
+          prevTodos.filter(todo => !idsToDelete.includes(todo.id)),
+        );
+      })
+      .catch(() => {
+        setIsError('Unable to delete todos');
+        hideErrorMessage();
+      });
   };
 
   return (
